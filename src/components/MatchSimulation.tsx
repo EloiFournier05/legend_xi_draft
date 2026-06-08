@@ -57,12 +57,12 @@ export function MatchSimulation({ match, canTick = true, canPause = true, canCon
       </section>
 
       <div className="grid gap-4 xl:grid-cols-[1fr_360px_1fr]">
-        <SquadPitch title={team1.name} formation={team1.formationId} starters={team1.starters} bench={team1.bench} compact />
+        <SquadPitch title={team1.name} formation={team1.formationId} starters={team1.starters} bench={team1.bench} teamSide="player1" compact />
         <div className="grid content-start gap-4">
           <MatchStats team1={team1} team2={team2} />
           <Timeline events={match.timeline} />
         </div>
-        <SquadPitch title={team2.name} formation={team2.formationId} starters={team2.starters} bench={team2.bench} compact />
+        <SquadPitch title={team2.name} formation={team2.formationId} starters={team2.starters} bench={team2.bench} teamSide="player2" compact />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
