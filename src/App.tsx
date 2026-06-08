@@ -1,5 +1,5 @@
 import { Copy, Crown, Gamepad2, LogIn, RotateCcw, Sparkles, Wifi } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { getFormation } from "./data/formations";
 import { DraftPanel } from "./components/DraftPanel";
 import { FinalResult } from "./components/FinalResult";
@@ -213,6 +213,62 @@ function MobileTeamProgress({ side, player }: { side: TeamSide; player: PlayerSt
   );
 }
 
+type MobileDraftPanel = "opponent" | "players" | "positions";
+
+function MobileAccordion({
+  id,
+  openPanel,
+  title,
+  subtitle,
+  onOpen,
+  children,
+}: {
+  id: MobileDraftPanel;
+  openPanel: MobileDraftPanel;
+  title: string;
+  subtitle: string;
+  onOpen: (panel: MobileDraftPanel) => void;
+  children: ReactNode;
+}) {
+  const isOpen = openPanel === id;
+  return (
+    <section className={["min-h-0 rounded-lg border", isOpen ? "border-neon/40 bg-black/25" : "border-white/10 bg-black/15"].join(" ")}>
+      <button type="button" onClick={() => onOpen(id)} className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left">
+        <span className="min-w-0">
+          <span className="block text-sm font-black text-white">{title}</span>
+          <span className="block truncate text-xs text-slate-400">{subtitle}</span>
+        </span>
+        <span className={["grid h-7 w-7 shrink-0 place-items-center rounded border text-sm font-black", isOpen ? "border-neon/40 text-neon" : "border-white/10 text-slate-400"].join(" ")}>
+          {isOpen ? "−" : "+"}
+        </span>
+      </button>
+      {isOpen ? <div className="min-h-0 px-3 pb-3">{children}</div> : null}
+    </section>
+  );
+}
+
+function MobileSquadList({ player }: { player: PlayerState }) {
+  return (
+    <div className="thin-scrollbar grid max-h-[42dvh] gap-2 overflow-y-auto pr-1">
+      {player.starters.map((starter) => (
+        <div key={starter.slot.id} className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+          <span className="rounded bg-black/40 px-2 py-1 text-xs font-black text-gold">{starter.slot.label}</span>
+          <span className="min-w-0 flex-1 truncate text-sm font-bold text-white">{starter.pick?.player.name ?? "Slot libre"}</span>
+        </div>
+      ))}
+      {Array.from({ length: 5 }).map((_, index) => {
+        const pick = player.bench[index];
+        return (
+          <div key={`bench-${index}`} className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+            <span className="rounded bg-black/40 px-2 py-1 text-xs font-black text-gold">B{index + 1}</span>
+            <span className="min-w-0 flex-1 truncate text-sm font-bold text-white">{pick?.player.name ?? "Banc libre"}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 interface DraftUiProps {
   draft: DraftState;
   players: Record<TeamSide, PlayerState>;
@@ -225,13 +281,29 @@ interface DraftUiProps {
 
 function MobileDraftScreen({ draft, players, canActDraft, waitingLabel, onSelectPlayer, onSelectDestination, onReroll }: DraftUiProps) {
   const active = players[draft.activePlayer];
+  const opponentSide: TeamSide = draft.activePlayer === "player1" ? "player2" : "player1";
+  const opponent = players[opponentSide];
   const currentSquad = draft.currentSquad;
   const destinations = nextDestinationOptions(active);
   const selectedPlayer = currentSquad?.players.find((player) => player.id === draft.selectedPlayerId);
+  const [openPanel, setOpenPanel] = useState<MobileDraftPanel>("players");
+
+  useEffect(() => {
+    setOpenPanel("players");
+  }, [draft.turnNumber, draft.activePlayer, currentSquad?.id]);
+
+  useEffect(() => {
+    if (draft.selectedPlayerId) setOpenPanel("positions");
+  }, [draft.selectedPlayerId]);
+
+  const handleSelectPlayer = (playerId: string) => {
+    onSelectPlayer(playerId);
+    setOpenPanel("positions");
+  };
 
   return (
     <main className="h-[100dvh] overflow-hidden px-3 py-3">
-      <div className="grid h-full grid-rows-[auto_auto_minmax(0,1fr)_auto] gap-3">
+      <div className="grid h-full grid-rows-[auto_auto_minmax(0,1fr)] gap-3">
         <header className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-bold uppercase text-neon">Tour {draft.turnNumber}</p>
@@ -254,61 +326,82 @@ function MobileDraftScreen({ draft, players, canActDraft, waitingLabel, onSelect
           <MobileTeamProgress side="player2" player={players.player2} />
         </section>
 
-        <section className="grid min-h-0 grid-rows-[auto_auto_minmax(0,1fr)] gap-2 rounded-lg border border-white/10 bg-black/20 p-3">
-          <div>
-            <p className="text-xs font-bold uppercase text-slate-400">Effectif tiré</p>
-            <h2 className="truncate font-display text-xl font-black text-gold">{currentSquad?.displayName}</h2>
-            {!canActDraft && waitingLabel ? <p className="mt-1 text-sm font-bold text-slate-300">{waitingLabel}</p> : null}
-          </div>
+        <div className="grid min-h-0 grid-rows-[auto_auto_minmax(0,1fr)] gap-2 overflow-hidden">
+          <MobileAccordion
+            id="opponent"
+            openPanel={openPanel}
+            onOpen={setOpenPanel}
+            title="Équipe adverse"
+            subtitle={`${opponent.name} · ${getFormation(opponent.formationId).name}`}
+          >
+            <MobileSquadList player={opponent} />
+          </MobileAccordion>
 
-          <div className="rounded-lg border border-neon/20 bg-neon/10 px-3 py-2 text-sm text-slate-200">
-            {selectedPlayer ? (
-              <span>
-                Joueur sélectionné : <b className="text-neon">{selectedPlayer.name}</b>
-              </span>
-            ) : (
-              "Touchez un joueur, puis un emplacement en bas."
-            )}
-          </div>
+          <MobileAccordion
+            id="players"
+            openPanel={openPanel}
+            onOpen={setOpenPanel}
+            title="Choisir le joueur"
+            subtitle={currentSquad ? currentSquad.displayName : "Aucun effectif tiré"}
+          >
+            <div className="mb-2 rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+              <p className="truncate font-display text-lg font-black text-gold">{currentSquad?.displayName}</p>
+              {!canActDraft && waitingLabel ? <p className="mt-1 text-sm font-bold text-slate-300">{waitingLabel}</p> : null}
+            </div>
+            <div className="thin-scrollbar max-h-[46dvh] overflow-y-auto pr-1">
+              <div className="grid grid-cols-2 gap-2">
+                {currentSquad?.players.map((player) => (
+                  <PlayerCard
+                    key={player.id}
+                    player={player}
+                    compact
+                    selected={draft.selectedPlayerId === player.id}
+                    disabled={!canActDraft}
+                    onClick={() => handleSelectPlayer(player.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          </MobileAccordion>
 
-          <div className="thin-scrollbar min-h-0 overflow-y-auto pr-1">
-            <div className="grid grid-cols-2 gap-2">
-              {currentSquad?.players.map((player) => (
-                <PlayerCard
-                  key={player.id}
-                  player={player}
-                  compact
-                  selected={draft.selectedPlayerId === player.id}
-                  disabled={!canActDraft}
-                  onClick={() => onSelectPlayer(player.id)}
-                />
+          <MobileAccordion
+            id="positions"
+            openPanel={openPanel}
+            onOpen={setOpenPanel}
+            title="Choisir la position"
+            subtitle={selectedPlayer ? selectedPlayer.name : "Choisis d'abord un joueur"}
+          >
+            <div className="mb-2 rounded-lg border border-neon/20 bg-neon/10 px-3 py-2 text-sm text-slate-200">
+              {selectedPlayer ? (
+                <span>
+                  Placement de <b className="text-neon">{selectedPlayer.name}</b>
+                </span>
+              ) : (
+                "Le panneau s'ouvre automatiquement après le choix du joueur."
+              )}
+            </div>
+            <div className="thin-scrollbar grid max-h-[46dvh] grid-cols-2 gap-2 overflow-y-auto pr-1">
+              {destinations.map((destination) => (
+                <button
+                  type="button"
+                  key={destination.id}
+                  disabled={!canActDraft || !selectedPlayer}
+                  onClick={() => onSelectDestination(destination.id)}
+                  className={[
+                    "min-h-[58px] rounded-lg border px-3 py-3 text-left text-sm font-black",
+                    draft.selectedDestination === destination.id
+                      ? "border-neon bg-neon/15 text-neon"
+                      : "border-white/10 bg-black/30 text-slate-200",
+                    !selectedPlayer ? "opacity-50" : "",
+                  ].join(" ")}
+                >
+                  {destination.label}
+                  <span className="block text-xs font-normal text-slate-400">{destination.group}</span>
+                </button>
               ))}
             </div>
-          </div>
-        </section>
-
-        <section className="rounded-lg border border-white/10 bg-panel/95 p-2 shadow-2xl">
-          <p className="px-1 pb-2 text-xs font-bold uppercase text-slate-400">Emplacement</p>
-          <div className="thin-scrollbar flex max-h-[112px] gap-2 overflow-x-auto pb-1">
-            {destinations.map((destination) => (
-              <button
-                type="button"
-                key={destination.id}
-                disabled={!canActDraft}
-                onClick={() => onSelectDestination(destination.id)}
-                className={[
-                  "min-w-[112px] rounded-lg border px-3 py-2 text-left text-sm font-bold",
-                  draft.selectedDestination === destination.id
-                    ? "border-neon bg-neon/15 text-neon"
-                    : "border-white/10 bg-black/30 text-slate-200",
-                ].join(" ")}
-              >
-                {destination.label}
-                <span className="block text-xs font-normal text-slate-400">{destination.group}</span>
-              </button>
-            ))}
-          </div>
-        </section>
+          </MobileAccordion>
+        </div>
       </div>
     </main>
   );
