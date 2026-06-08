@@ -45,7 +45,7 @@ export function GameSessionProvider({ children }: { children: ReactNode }) {
   const draft = useGameStore((state) => state.draft);
   const setSession = useGameStore((state) => state.setSession);
   const replaceFromRemote = useGameStore((state) => state.replaceFromRemote);
-  const channelRef = useRef<RealtimeChannel | undefined>();
+  const channelRef = useRef<RealtimeChannel | undefined>(undefined);
   const applyingRemoteRef = useRef(false);
 
   const isOnline = session.mode === "online";
