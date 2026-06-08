@@ -1,4 +1,4 @@
-import { RotateCcw, ShieldCheck } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { nextDestinationOptions } from "../utils/draft";
 import type { DraftState, PlayerState, TeamSide } from "../types/game";
 import { PlayerCard } from "./PlayerCard";
@@ -8,18 +8,16 @@ interface DraftPanelProps {
   players: Record<TeamSide, PlayerState>;
   canAct?: boolean;
   waitingLabel?: string;
-  onSelectPlayer: (playerId?: string) => void;
-  onSelectDestination: (destination?: string) => void;
+  onSelectPlayer: (playerId: string) => void;
+  onSelectDestination: (destination: string) => void;
   onReroll: () => void;
-  onConfirm: () => void;
 }
 
-export function DraftPanel({ draft, players, canAct = true, waitingLabel, onSelectPlayer, onSelectDestination, onReroll, onConfirm }: DraftPanelProps) {
+export function DraftPanel({ draft, players, canAct = true, waitingLabel, onSelectPlayer, onSelectDestination, onReroll }: DraftPanelProps) {
   const active = players[draft.activePlayer];
   const currentSquad = draft.currentSquad;
   const selectedPlayer = currentSquad?.players.find((player) => player.id === draft.selectedPlayerId);
   const destinations = nextDestinationOptions(active);
-  const canConfirm = Boolean(selectedPlayer && draft.selectedDestination);
 
   return (
     <section className="card-frame rounded-lg p-4">
@@ -73,7 +71,12 @@ export function DraftPanel({ draft, players, canAct = true, waitingLabel, onSele
         </div>
 
         <div>
-          <h3 className="mb-2 font-bold">Choisir un slot</h3>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h3 className="font-bold">Choisir un slot</h3>
+            <span className="text-right text-xs text-slate-400">
+              {selectedPlayer ? `${selectedPlayer.name} est prêt` : "Validation automatique"}
+            </span>
+          </div>
           <div className="grid grid-cols-2 gap-2">
             {destinations.map((destination) => (
               <button
@@ -96,15 +99,9 @@ export function DraftPanel({ draft, players, canAct = true, waitingLabel, onSele
         </div>
       </div>
 
-      <button
-        type="button"
-        disabled={!canAct || !canConfirm}
-        onClick={onConfirm}
-        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-neon px-5 py-4 font-black text-night disabled:opacity-40"
-      >
-        <ShieldCheck size={20} />
-        Valider le pick
-      </button>
+      <p className="mt-4 rounded-lg border border-neon/20 bg-neon/10 px-3 py-2 text-xs font-semibold text-slate-300">
+        Clique un joueur puis un emplacement : le pick part tout seul.
+      </p>
     </section>
   );
 }
