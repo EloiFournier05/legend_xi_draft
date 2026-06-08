@@ -1,4 +1,4 @@
-import type { DraftedPlayer, StarterSlot } from "../types/game";
+import type { DraftedPlayer, StarterSlot, TeamSide } from "../types/game";
 import { PlayerCard } from "./PlayerCard";
 
 interface SquadPitchProps {
@@ -9,6 +9,7 @@ interface SquadPitchProps {
   selectableDestinations?: string[];
   selectedDestination?: string;
   onSelectDestination?: (destination: string) => void;
+  teamSide?: TeamSide;
   compact?: boolean;
 }
 
@@ -20,10 +21,13 @@ export function SquadPitch({
   selectableDestinations = [],
   selectedDestination,
   onSelectDestination,
+  teamSide,
   compact,
 }: SquadPitchProps) {
+  const teamClass = teamSide ? `team-pitch-${teamSide}` : "";
+
   return (
-    <section className="card-frame rounded-lg p-3">
+    <section className={["card-frame rounded-lg p-3", teamClass].join(" ")}>
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
           <h2 className="font-display text-lg font-black">{title}</h2>
