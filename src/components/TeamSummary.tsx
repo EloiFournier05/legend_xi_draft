@@ -13,6 +13,7 @@ export function TeamSummary({ team }: TeamSummaryProps) {
       formation={getFormation(team.formationId).name}
       starters={team.starters}
       bench={team.bench}
+      teamSide={"side" in team ? team.side : team.id}
       compact
     />
   );
