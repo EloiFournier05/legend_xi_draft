@@ -1,11 +1,11 @@
-import type { StarterSlot } from "../types/game";
+import type { DraftedPlayer, StarterSlot } from "../types/game";
 import { PlayerCard } from "./PlayerCard";
 
 interface SquadPitchProps {
   title: string;
   formation: string;
   starters: StarterSlot[];
-  bench?: { instanceId: string; player: { name: string; positions: string[] }; sourceDisplayName: string; redCard?: boolean }[];
+  bench?: DraftedPlayer[];
   selectableDestinations?: string[];
   selectedDestination?: string;
   onSelectDestination?: (destination: string) => void;
