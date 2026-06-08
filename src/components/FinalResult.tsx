@@ -1,4 +1,5 @@
 import type { MatchState } from "../types/game";
+import { formatShortPlayerName } from "../utils/playerNames";
 import { MatchStats } from "./MatchStats";
 import { Timeline } from "./Timeline";
 
@@ -30,7 +31,7 @@ export function FinalResult({ match, onReplay }: FinalResultProps) {
   const formatLeaders = (items: Record<string, number>) =>
     Object.entries(items)
       .sort((a, b) => b[1] - a[1])
-      .map(([name, count]) => `${name} (${count})`)
+      .map(([name, count]) => `${formatShortPlayerName(name)} (${count})`)
       .join(", ") || "Aucun";
 
   return (
@@ -41,7 +42,7 @@ export function FinalResult({ match, onReplay }: FinalResultProps) {
           {team1.stats.goals} - {team2.stats.goals}
         </h1>
         <p className="mt-2 text-xl font-bold">{winner}</p>
-        <p className="mt-2 text-slate-300">Homme du match : {motm?.player.name ?? "non attribué"}</p>
+        <p className="mt-2 text-slate-300">Homme du match : {motm ? formatShortPlayerName(motm.player.name) : "non attribué"}</p>
         <button type="button" onClick={onReplay} className="mt-5 rounded-lg bg-neon px-6 py-4 font-black text-night">
           Rejouer
         </button>
