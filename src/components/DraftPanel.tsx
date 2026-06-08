@@ -1,5 +1,6 @@
 import { RotateCcw } from "lucide-react";
 import { nextDestinationOptions } from "../utils/draft";
+import { formatShortPlayerName } from "../utils/playerNames";
 import type { DraftState, PlayerState, TeamSide } from "../types/game";
 import { PlayerCard } from "./PlayerCard";
 
@@ -74,7 +75,7 @@ export function DraftPanel({ draft, players, canAct = true, waitingLabel, onSele
           <div className="mb-2 flex items-center justify-between gap-2">
             <h3 className="font-bold">Choisir un slot</h3>
             <span className="text-right text-xs text-slate-400">
-              {selectedPlayer ? `${selectedPlayer.name} est prêt` : "Validation automatique"}
+              {selectedPlayer ? `${formatShortPlayerName(selectedPlayer.name)} est prêt` : "Validation automatique"}
             </span>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -98,10 +99,6 @@ export function DraftPanel({ draft, players, canAct = true, waitingLabel, onSele
           </div>
         </div>
       </div>
-
-      <p className="mt-4 rounded-lg border border-neon/20 bg-neon/10 px-3 py-2 text-xs font-semibold text-slate-300">
-        Clique un joueur puis un emplacement : le pick part tout seul.
-      </p>
     </section>
   );
 }
