@@ -1,14 +1,17 @@
-import { Copy, Crown, Gamepad2, LogIn, Sparkles, Wifi } from "lucide-react";
+import { Copy, Crown, Gamepad2, LogIn, RotateCcw, Sparkles, Wifi } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { getFormation } from "./data/formations";
 import { DraftPanel } from "./components/DraftPanel";
 import { FinalResult } from "./components/FinalResult";
 import { FormationSelector } from "./components/FormationSelector";
 import { MatchSimulation } from "./components/MatchSimulation";
+import { PlayerCard } from "./components/PlayerCard";
 import { SquadPitch } from "./components/SquadPitch";
 import { TeamSummary } from "./components/TeamSummary";
 import { useGameSession } from "./session/GameSessionProvider";
 import { useGameStore } from "./store/gameStore";
+import { nextDestinationOptions } from "./utils/draft";
+import type { DraftState, PlayerState, TeamSide } from "./types/game";
 
 function Shell({ children }: { children: ReactNode }) {
   return (
@@ -200,62 +203,203 @@ function SetupScreen() {
   );
 }
 
+function MobileTeamProgress({ side, player }: { side: TeamSide; player: PlayerState }) {
+  const starters = player.starters.filter((slot) => slot.pick).length;
+  return (
+    <div className="rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+      <p className="truncate text-xs font-bold text-slate-300">{side === "player1" ? "J1" : "J2"} · {player.name}</p>
+      <p className="text-sm font-black text-white">{starters}/11 <span className="text-slate-500">+</span> {player.bench.length}/5</p>
+    </div>
+  );
+}
+
+interface DraftUiProps {
+  draft: DraftState;
+  players: Record<TeamSide, PlayerState>;
+  canActDraft: boolean;
+  waitingLabel?: string;
+  onSelectPlayer: (playerId: string) => void;
+  onSelectDestination: (destination: string) => void;
+  onReroll: () => void;
+}
+
+function MobileDraftScreen({ draft, players, canActDraft, waitingLabel, onSelectPlayer, onSelectDestination, onReroll }: DraftUiProps) {
+  const active = players[draft.activePlayer];
+  const currentSquad = draft.currentSquad;
+  const destinations = nextDestinationOptions(active);
+  const selectedPlayer = currentSquad?.players.find((player) => player.id === draft.selectedPlayerId);
+
+  return (
+    <main className="h-[100dvh] overflow-hidden px-3 py-3">
+      <div className="grid h-full grid-rows-[auto_auto_minmax(0,1fr)_auto] gap-3">
+        <header className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase text-neon">Tour {draft.turnNumber}</p>
+            <h1 className="truncate font-display text-2xl font-black">{active.name} drafte</h1>
+          </div>
+          <button
+            type="button"
+            onClick={onReroll}
+            disabled={!canActDraft || !currentSquad || Boolean(draft.selectedPlayerId) || active.rerollsLeft <= 0}
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-gold/40 bg-gold/10 px-3 py-2 text-sm font-bold text-gold disabled:opacity-40"
+            title="Changer l'effectif tiré"
+          >
+            <RotateCcw size={16} />
+            {active.rerollsLeft}
+          </button>
+        </header>
+
+        <section className="grid grid-cols-2 gap-2">
+          <MobileTeamProgress side="player1" player={players.player1} />
+          <MobileTeamProgress side="player2" player={players.player2} />
+        </section>
+
+        <section className="grid min-h-0 grid-rows-[auto_auto_minmax(0,1fr)] gap-2 rounded-lg border border-white/10 bg-black/20 p-3">
+          <div>
+            <p className="text-xs font-bold uppercase text-slate-400">Effectif tiré</p>
+            <h2 className="truncate font-display text-xl font-black text-gold">{currentSquad?.displayName}</h2>
+            {!canActDraft && waitingLabel ? <p className="mt-1 text-sm font-bold text-slate-300">{waitingLabel}</p> : null}
+          </div>
+
+          <div className="rounded-lg border border-neon/20 bg-neon/10 px-3 py-2 text-sm text-slate-200">
+            {selectedPlayer ? (
+              <span>
+                Joueur sélectionné : <b className="text-neon">{selectedPlayer.name}</b>
+              </span>
+            ) : (
+              "Touchez un joueur, puis un emplacement en bas."
+            )}
+          </div>
+
+          <div className="thin-scrollbar min-h-0 overflow-y-auto pr-1">
+            <div className="grid grid-cols-2 gap-2">
+              {currentSquad?.players.map((player) => (
+                <PlayerCard
+                  key={player.id}
+                  player={player}
+                  compact
+                  selected={draft.selectedPlayerId === player.id}
+                  disabled={!canActDraft}
+                  onClick={() => onSelectPlayer(player.id)}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-white/10 bg-panel/95 p-2 shadow-2xl">
+          <p className="px-1 pb-2 text-xs font-bold uppercase text-slate-400">Emplacement</p>
+          <div className="thin-scrollbar flex max-h-[112px] gap-2 overflow-x-auto pb-1">
+            {destinations.map((destination) => (
+              <button
+                type="button"
+                key={destination.id}
+                disabled={!canActDraft}
+                onClick={() => onSelectDestination(destination.id)}
+                className={[
+                  "min-w-[112px] rounded-lg border px-3 py-2 text-left text-sm font-bold",
+                  draft.selectedDestination === destination.id
+                    ? "border-neon bg-neon/15 text-neon"
+                    : "border-white/10 bg-black/30 text-slate-200",
+                ].join(" ")}
+              >
+                {destination.label}
+                <span className="block text-xs font-normal text-slate-400">{destination.group}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
 function DraftScreen() {
   const players = useGameStore((state) => state.players);
   const draft = useGameStore((state) => state.draft);
   const { selectDraftPlayer, selectDestination, rerollSquad, confirmDraftPick, canActDraft, session } = useGameSession();
   const active = players[draft.activePlayer];
-  const destinationIds = [
-    ...active.starters.filter((slot) => !slot.pick).map((slot) => slot.slot.id),
-    ...Array.from({ length: Math.max(0, 5 - active.bench.length) }, (_, index) => `bench-${active.bench.length + index}`),
-  ];
+  const destinationIds = nextDestinationOptions(active).map((destination) => destination.id);
+  const waitingLabel = session.mode === "online" ? "En attente de l'adversaire" : undefined;
+
+  const confirmAfterStateUpdate = () => {
+    window.setTimeout(confirmDraftPick, 0);
+  };
+
+  const selectPlayerAndMaybeConfirm = (playerId: string) => {
+    if (!canActDraft) return;
+    selectDraftPlayer(playerId);
+    if (draft.selectedDestination) confirmAfterStateUpdate();
+  };
+
+  const selectDestinationAndMaybeConfirm = (destination: string) => {
+    if (!canActDraft) return;
+    selectDestination(destination);
+    if (draft.selectedPlayerId) confirmAfterStateUpdate();
+  };
 
   return (
-    <Shell>
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-bold uppercase text-neon">Draft alternée</p>
-          <h1 className="font-display text-4xl font-black">Choisis ton légendaire</h1>
-        </div>
-        <div className="rounded-lg border border-white/10 bg-black/20 px-4 py-3 text-sm">
-          {players.player1.name} : {players.player1.rerollsLeft} rerolls · {players.player2.name} : {players.player2.rerollsLeft} rerolls
-        </div>
-      </header>
-      <OnlineStatusBanner />
+    <>
+      <div className="hidden md:block">
+        <Shell>
+          <header className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold uppercase text-neon">Draft alternée</p>
+              <h1 className="font-display text-4xl font-black">Choisis ton légendaire</h1>
+              <p className="mt-1 text-sm text-slate-400">Un clic sur le joueur, un clic sur le poste : le pick est validé automatiquement.</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-black/20 px-4 py-3 text-sm">
+              {players.player1.name} : {players.player1.rerollsLeft} rerolls · {players.player2.name} : {players.player2.rerollsLeft} rerolls
+            </div>
+          </header>
+          <OnlineStatusBanner />
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_440px_1fr]">
-        <SquadPitch
-          title={players.player1.name}
-          formation={getFormation(players.player1.formationId).name}
-          starters={players.player1.starters}
-          bench={players.player1.bench}
-          selectableDestinations={canActDraft && draft.activePlayer === "player1" ? destinationIds : []}
-          selectedDestination={draft.selectedDestination}
-          onSelectDestination={selectDestination}
-          compact
-        />
-        <DraftPanel
+          <div className="grid gap-4 xl:grid-cols-[1fr_440px_1fr]">
+            <SquadPitch
+              title={players.player1.name}
+              formation={getFormation(players.player1.formationId).name}
+              starters={players.player1.starters}
+              bench={players.player1.bench}
+              selectableDestinations={canActDraft && draft.activePlayer === "player1" ? destinationIds : []}
+              selectedDestination={draft.selectedDestination}
+              onSelectDestination={selectDestinationAndMaybeConfirm}
+              compact
+            />
+            <DraftPanel
+              draft={draft}
+              players={players}
+              canAct={canActDraft}
+              waitingLabel={waitingLabel}
+              onSelectPlayer={selectPlayerAndMaybeConfirm}
+              onSelectDestination={selectDestinationAndMaybeConfirm}
+              onReroll={rerollSquad}
+            />
+            <SquadPitch
+              title={players.player2.name}
+              formation={getFormation(players.player2.formationId).name}
+              starters={players.player2.starters}
+              bench={players.player2.bench}
+              selectableDestinations={canActDraft && draft.activePlayer === "player2" ? destinationIds : []}
+              selectedDestination={draft.selectedDestination}
+              onSelectDestination={selectDestinationAndMaybeConfirm}
+              compact
+            />
+          </div>
+        </Shell>
+      </div>
+
+      <div className="md:hidden">
+        <MobileDraftScreen
           draft={draft}
           players={players}
-          canAct={canActDraft}
-          waitingLabel={session.mode === "online" ? "En attente de l'adversaire" : undefined}
-          onSelectPlayer={selectDraftPlayer}
-          onSelectDestination={selectDestination}
+          canActDraft={canActDraft}
+          waitingLabel={waitingLabel}
+          onSelectPlayer={selectPlayerAndMaybeConfirm}
+          onSelectDestination={selectDestinationAndMaybeConfirm}
           onReroll={rerollSquad}
-          onConfirm={confirmDraftPick}
-        />
-        <SquadPitch
-          title={players.player2.name}
-          formation={getFormation(players.player2.formationId).name}
-          starters={players.player2.starters}
-          bench={players.player2.bench}
-          selectableDestinations={canActDraft && draft.activePlayer === "player2" ? destinationIds : []}
-          selectedDestination={draft.selectedDestination}
-          onSelectDestination={selectDestination}
-          compact
         />
       </div>
-    </Shell>
+    </>
   );
 }
 
