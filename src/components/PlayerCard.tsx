@@ -1,4 +1,5 @@
 import type { DraftedPlayer, Player } from "../types/game";
+import { formatShortPlayerName } from "../utils/playerNames";
 
 interface PlayerCardProps {
   player?: Player;
@@ -15,6 +16,7 @@ const primaryPosition = (player?: Player) => player?.positions[0] ?? "VIDE";
 export function PlayerCard({ player, pick, compact, selected, disabled, slotLabel, onClick }: PlayerCardProps) {
   const shownPlayer = player ?? pick?.player;
   const isEmpty = !shownPlayer;
+  const displayName = shownPlayer && pick ? formatShortPlayerName(shownPlayer.name) : shownPlayer?.name;
 
   return (
     <button
@@ -35,7 +37,7 @@ export function PlayerCard({ player, pick, compact, selected, disabled, slotLabe
       </div>
       <div>
         <p className={compact ? "text-sm font-black leading-tight" : "text-base font-black leading-tight"}>
-          {isEmpty ? "Slot libre" : shownPlayer.name}
+          {isEmpty ? "Slot libre" : displayName}
         </p>
         {pick ? <p className="mt-1 text-xs text-slate-300">{pick.sourceDisplayName}</p> : null}
         {shownPlayer?.legendTag ? <p className="mt-1 text-xs font-semibold text-neon">{shownPlayer.legendTag}</p> : null}
