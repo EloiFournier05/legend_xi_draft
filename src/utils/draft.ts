@@ -1,8 +1,11 @@
 import { historicalSquads } from "../data/squads";
+import { extraHistoricalSquads } from "../data/extraSquads";
 import type { DraftedPlayer, HistoricalSquad, Player, PlayerState, TeamSide } from "../types/game";
 
+const draftSquads = [...historicalSquads, ...extraHistoricalSquads];
+
 export const randomSquad = (avoidSquadId?: string): HistoricalSquad => {
-  const pool = historicalSquads.length > 1 ? historicalSquads.filter((squad) => squad.id !== avoidSquadId) : historicalSquads;
+  const pool = draftSquads.length > 1 ? draftSquads.filter((squad) => squad.id !== avoidSquadId) : draftSquads;
   return pool[Math.floor(Math.random() * pool.length)];
 };
 
