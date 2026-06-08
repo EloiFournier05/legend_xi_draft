@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { formations } from "../data/formations";
 import type { MatchTeamState, TeamSide } from "../types/game";
+import { formatShortPlayerName } from "../utils/playerNames";
 
 interface SubstitutionPanelProps {
   team: MatchTeamState;
@@ -50,7 +51,7 @@ export function SubstitutionPanel({ team, disabled = false, onApply, onFormation
           <option value="">Sortant</option>
           {activePlayers.map((pick) => (
             <option key={pick!.instanceId} value={pick!.instanceId}>
-              {pick!.player.name}
+              {formatShortPlayerName(pick!.player.name)}
             </option>
           ))}
         </select>
@@ -58,7 +59,7 @@ export function SubstitutionPanel({ team, disabled = false, onApply, onFormation
           <option value="">Entrant</option>
           {team.bench.map((pick) => (
             <option key={pick.instanceId} value={pick.instanceId}>
-              {pick.player.name}
+              {formatShortPlayerName(pick.player.name)}
             </option>
           ))}
         </select>
@@ -93,7 +94,11 @@ export function SubstitutionPanel({ team, disabled = false, onApply, onFormation
           {pairs.map((pair) => {
             const outgoing = activePlayers.find((pick) => pick?.instanceId === pair.outInstanceId);
             const incoming = team.bench.find((pick) => pick.instanceId === pair.inInstanceId);
-            return <li key={`${pair.outInstanceId}-${pair.inInstanceId}`}>{incoming?.player.name} pour {outgoing?.player.name}</li>;
+            return (
+              <li key={`${pair.outInstanceId}-${pair.inInstanceId}`}>
+                {incoming ? formatShortPlayerName(incoming.player.name) : ""} pour {outgoing ? formatShortPlayerName(outgoing.player.name) : ""}
+              </li>
+            );
           })}
         </ul>
       ) : null}
