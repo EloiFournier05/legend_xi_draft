@@ -11,6 +11,7 @@ import { TeamSummary } from "./components/TeamSummary";
 import { useGameSession } from "./session/GameSessionProvider";
 import { useGameStore } from "./store/gameStore";
 import { nextDestinationOptions } from "./utils/draft";
+import { formatShortPlayerName } from "./utils/playerNames";
 import type { DraftState, PlayerState, TeamSide } from "./types/game";
 
 function Shell({ children }: { children: ReactNode }) {
@@ -23,15 +24,15 @@ function Shell({ children }: { children: ReactNode }) {
 
 function OnlineStatusBanner() {
   const { session, isOnline, copyShareLink, leaveOnlineGame } = useGameSession();
+  const players = useGameStore((state) => state.players);
   if (!isOnline) return null;
+  const onlinePlayerName = session.role ? players[session.role].name : "Partie en ligne";
 
   return (
     <section className="card-frame rounded-lg p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-bold uppercase text-neon">
-            {session.role === "player1" ? "Tu es Joueur 1" : "Tu es Joueur 2"} · {session.syncStatus}
-          </p>
+          <p className="text-sm font-bold uppercase text-neon">{onlinePlayerName}</p>
           <p className="text-sm text-slate-300">
             Code : <span className="font-black text-gold">{session.code}</span>
           </p>
@@ -239,7 +240,7 @@ function MobileAccordion({
           <span className="block truncate text-xs text-slate-400">{subtitle}</span>
         </span>
         <span className={["grid h-7 w-7 shrink-0 place-items-center rounded border text-sm font-black", isOpen ? "border-neon/40 text-neon" : "border-white/10 text-slate-400"].join(" ")}>
-          {isOpen ? "−" : "+"}
+          {isOpen ? "-" : "+"}
         </span>
       </button>
       {isOpen ? <div className="min-h-0 px-3 pb-3">{children}</div> : null}
@@ -253,7 +254,7 @@ function MobileSquadList({ player }: { player: PlayerState }) {
       {player.starters.map((starter) => (
         <div key={starter.slot.id} className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/25 px-3 py-2">
           <span className="rounded bg-black/40 px-2 py-1 text-xs font-black text-gold">{starter.slot.label}</span>
-          <span className="min-w-0 flex-1 truncate text-sm font-bold text-white">{starter.pick?.player.name ?? "Slot libre"}</span>
+          <span className="min-w-0 flex-1 truncate text-sm font-bold text-white">{starter.pick ? formatShortPlayerName(starter.pick.player.name) : "Slot libre"}</span>
         </div>
       ))}
       {Array.from({ length: 5 }).map((_, index) => {
@@ -261,7 +262,7 @@ function MobileSquadList({ player }: { player: PlayerState }) {
         return (
           <div key={`bench-${index}`} className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/25 px-3 py-2">
             <span className="rounded bg-black/40 px-2 py-1 text-xs font-black text-gold">B{index + 1}</span>
-            <span className="min-w-0 flex-1 truncate text-sm font-bold text-white">{pick?.player.name ?? "Banc libre"}</span>
+            <span className="min-w-0 flex-1 truncate text-sm font-bold text-white">{pick ? formatShortPlayerName(pick.player.name) : "Banc libre"}</span>
           </div>
         );
       })}
@@ -369,12 +370,12 @@ function MobileDraftScreen({ draft, players, canActDraft, waitingLabel, onSelect
             openPanel={openPanel}
             onOpen={setOpenPanel}
             title="Choisir la position"
-            subtitle={selectedPlayer ? selectedPlayer.name : "Choisis d'abord un joueur"}
+            subtitle={selectedPlayer ? formatShortPlayerName(selectedPlayer.name) : "Choisis d'abord un joueur"}
           >
             <div className="mb-2 rounded-lg border border-neon/20 bg-neon/10 px-3 py-2 text-sm text-slate-200">
               {selectedPlayer ? (
                 <span>
-                  Placement de <b className="text-neon">{selectedPlayer.name}</b>
+                  Placement de <b className="text-neon">{formatShortPlayerName(selectedPlayer.name)}</b>
                 </span>
               ) : (
                 "Le panneau s'ouvre automatiquement après le choix du joueur."
@@ -438,8 +439,7 @@ function DraftScreen() {
           <header className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold uppercase text-neon">Draft alternée</p>
-              <h1 className="font-display text-4xl font-black">Choisis ton légendaire</h1>
-              <p className="mt-1 text-sm text-slate-400">Un clic sur le joueur, un clic sur le poste : le pick est validé automatiquement.</p>
+              <h1 className="font-display text-4xl font-black">XI de Légende</h1>
             </div>
             <div className="rounded-lg border border-white/10 bg-black/20 px-4 py-3 text-sm">
               {players.player1.name} : {players.player1.rerollsLeft} rerolls · {players.player2.name} : {players.player2.rerollsLeft} rerolls
@@ -456,6 +456,7 @@ function DraftScreen() {
               selectableDestinations={canActDraft && draft.activePlayer === "player1" ? destinationIds : []}
               selectedDestination={draft.selectedDestination}
               onSelectDestination={selectDestinationAndMaybeConfirm}
+              teamSide="player1"
               compact
             />
             <DraftPanel
@@ -475,6 +476,7 @@ function DraftScreen() {
               selectableDestinations={canActDraft && draft.activePlayer === "player2" ? destinationIds : []}
               selectedDestination={draft.selectedDestination}
               onSelectDestination={selectDestinationAndMaybeConfirm}
+              teamSide="player2"
               compact
             />
           </div>
