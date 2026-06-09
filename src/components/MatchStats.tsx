@@ -1,5 +1,7 @@
 import type { MatchTeamState } from "../types/game";
 
+type NumericStatKey = "bigChances" | "corners" | "penalties" | "freeKicks" | "saves" | "fouls" | "woodwork";
+
 interface MatchStatsProps {
   team1: MatchTeamState;
   team2: MatchTeamState;
@@ -14,13 +16,22 @@ const Row = ({ label, left, right }: { label: string; left: string | number; rig
 );
 
 export function MatchStats({ team1, team2 }: MatchStatsProps) {
+  const stat = (team: MatchTeamState, key: NumericStatKey) => team.stats[key] ?? 0;
+
   return (
     <section className="card-frame rounded-lg p-4">
       <h2 className="mb-3 font-display text-xl font-black">Statistiques</h2>
       <Row label="Possession" left={`${team1.stats.possession}%`} right={`${team2.stats.possession}%`} />
       <Row label="Tirs" left={team1.stats.shots} right={team2.stats.shots} />
-      <Row label="Tirs cadrés" left={team1.stats.shotsOnTarget} right={team2.stats.shotsOnTarget} />
+      <Row label="Tirs cadres" left={team1.stats.shotsOnTarget} right={team2.stats.shotsOnTarget} />
       <Row label="xG" left={team1.stats.xg.toFixed(2)} right={team2.stats.xg.toFixed(2)} />
+      <Row label="Grosses occasions" left={stat(team1, "bigChances")} right={stat(team2, "bigChances")} />
+      <Row label="Corners" left={stat(team1, "corners")} right={stat(team2, "corners")} />
+      <Row label="Penalties" left={stat(team1, "penalties")} right={stat(team2, "penalties")} />
+      <Row label="Coups francs" left={stat(team1, "freeKicks")} right={stat(team2, "freeKicks")} />
+      <Row label="Arrets" left={stat(team1, "saves")} right={stat(team2, "saves")} />
+      <Row label="Fautes" left={stat(team1, "fouls")} right={stat(team2, "fouls")} />
+      <Row label="Poteaux" left={stat(team1, "woodwork")} right={stat(team2, "woodwork")} />
       <Row label="Rouges" left={team1.stats.redCards} right={team2.stats.redCards} />
     </section>
   );
