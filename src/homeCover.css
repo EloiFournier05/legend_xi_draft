@@ -1,7 +1,8 @@
 .card-frame.max-w-3xl::before {
   z-index: 0 !important;
   opacity: 1 !important;
-  filter: brightness(1.35) saturate(1.15) contrast(1.05);
+  background-blend-mode: screen, normal !important;
+  filter: brightness(2.15) saturate(1.32) contrast(1.08) !important;
 }
 
 .card-frame.max-w-3xl::after {
@@ -16,6 +17,6 @@
 @media (min-width: 900px) {
   .card-frame.max-w-3xl::before {
     width: 24rem !important;
-    box-shadow: inset -42px 0 52px rgba(7, 11, 19, 0.72), 18px 0 44px rgba(7, 11, 19, 0.4) !important;
+    box-shadow: inset -26px 0 34px rgba(7, 11, 19, 0.34), 18px 0 34px rgba(7, 11, 19, 0.24) !important;
   }
 }
