@@ -1,0 +1,13 @@
+.card-frame.max-w-3xl::before {
+  z-index: 0;
+}
+
+.card-frame.max-w-3xl::after {
+  z-index: 0;
+  pointer-events: none;
+}
+
+.card-frame.max-w-3xl > * {
+  position: relative;
+  z-index: 1;
+}
