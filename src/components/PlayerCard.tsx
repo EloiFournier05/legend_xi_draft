@@ -9,12 +9,13 @@ interface PlayerCardProps {
   disabled?: boolean;
   slotLabel?: string;
   matchRating?: number;
+  statusLabel?: string;
   onClick?: () => void;
 }
 
 const primaryPosition = (player?: Player) => player?.positions[0] ?? "VIDE";
 
-export function PlayerCard({ player, pick, compact, selected, disabled, slotLabel, matchRating, onClick }: PlayerCardProps) {
+export function PlayerCard({ player, pick, compact, selected, disabled, slotLabel, matchRating, statusLabel, onClick }: PlayerCardProps) {
   const shownPlayer = player ?? pick?.player;
   const isEmpty = !shownPlayer;
   const displayName = shownPlayer && pick ? formatShortPlayerName(shownPlayer.name) : shownPlayer?.name;
@@ -35,6 +36,7 @@ export function PlayerCard({ player, pick, compact, selected, disabled, slotLabe
       <div className="flex items-start justify-between gap-2">
         <span className="rounded bg-black/30 px-2 py-1 text-xs font-bold text-gold">{slotLabel ?? primaryPosition(shownPlayer)}</span>
         <div className="flex items-center gap-1">
+          {statusLabel ? <span className="rounded bg-black/40 px-2 py-1 text-xs font-black text-slate-300">{statusLabel}</span> : null}
           {typeof matchRating === "number" && !pick?.redCard ? (
             <span className="rounded bg-white/12 px-2 py-1 text-xs font-black text-white ring-1 ring-white/15">{matchRating.toFixed(1)}</span>
           ) : null}
