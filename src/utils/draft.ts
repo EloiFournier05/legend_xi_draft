@@ -3,6 +3,13 @@ import { extraHistoricalSquads } from "../data/extraSquads";
 import type { DraftedPlayer, HistoricalSquad, Player, PlayerState, TeamSide } from "../types/game";
 
 const draftSquads = [...historicalSquads, ...extraHistoricalSquads];
+export const normalizeDraftPlayerName = (name: string) =>
+  name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 
 export const randomSquad = (avoidSquadId?: string): HistoricalSquad => {
   const pool = draftSquads.length > 1 ? draftSquads.filter((squad) => squad.id !== avoidSquadId) : draftSquads;
@@ -20,6 +27,20 @@ export const createDraftedPlayer = (player: Player, squad: HistoricalSquad, team
 
 export const countPicks = (player: PlayerState): number =>
   player.starters.filter((slot) => slot.pick).length + player.bench.length;
+
+export const draftedPlayerNames = (players: Record<TeamSide, PlayerState>) => {
+  const names = new Set<string>();
+  Object.values(players).forEach((player) => {
+    player.starters.forEach((starter) => {
+      if (starter.pick) names.add(normalizeDraftPlayerName(starter.pick.player.name));
+    });
+    player.bench.forEach((pick) => names.add(normalizeDraftPlayerName(pick.player.name)));
+  });
+  return names;
+};
+
+export const isPlayerAlreadyDrafted = (players: Record<TeamSide, PlayerState>, player: Player) =>
+  draftedPlayerNames(players).has(normalizeDraftPlayerName(player.name));
 
 export const isTeamComplete = (player: PlayerState): boolean =>
   player.starters.every((slot) => slot.pick) && player.bench.length >= 5;
