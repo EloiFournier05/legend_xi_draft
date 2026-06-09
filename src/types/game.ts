@@ -118,13 +118,20 @@ export interface MatchStats {
   possession: number;
   xg: number;
   redCards: number;
+  corners: number;
+  penalties: number;
+  fouls: number;
+  saves: number;
+  bigChances: number;
+  woodwork: number;
+  freeKicks: number;
 }
 
 export interface TimelineEvent {
   id: string;
   minute: number;
   text: string;
-  type: "goal" | "chance" | "card" | "tactic" | "sub" | "calm" | "defense";
+  type: "goal" | "chance" | "card" | "tactic" | "sub" | "calm" | "defense" | "corner" | "penalty" | "keeper" | "woodwork" | "counter" | "freeKick";
   team?: TeamSide;
 }
 
