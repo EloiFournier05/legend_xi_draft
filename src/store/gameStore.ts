@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { createStarterSlots, getFormation } from "../data/formations";
-import { createDraftedPlayer, isDraftComplete, otherSide, randomSquad } from "../utils/draft";
+import { createDraftedPlayer, isDraftComplete, isPlayerAlreadyDrafted, otherSide, randomSquad } from "../utils/draft";
 import { assignPlayersToFormation } from "../utils/teamStrength";
 import { simulateMinute } from "../utils/simulation";
 import type { DraftedPlayer, GameState, HistoricalSquad, MatchState, SessionState, TeamSide } from "../types/game";
@@ -240,9 +240,13 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     }),
 
   selectDraftPlayer: (playerId) =>
-    set((state) => ({
-      draft: { ...state.draft, selectedPlayerId: playerId },
-    })),
+    set((state) => {
+      const player = state.draft.currentSquad?.players.find((candidate) => candidate.id === playerId);
+      if (player && isPlayerAlreadyDrafted(state.players, player)) return state;
+      return {
+        draft: { ...state.draft, selectedPlayerId: playerId },
+      };
+    }),
 
   selectDestination: (destination) =>
     set((state) => ({
@@ -255,6 +259,15 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       const player = squad?.players.find((candidate) => candidate.id === state.draft.selectedPlayerId);
       const destination = state.draft.selectedDestination;
       if (!squad || !player || !destination) return state;
+      if (isPlayerAlreadyDrafted(state.players, player)) {
+        return {
+          draft: {
+            ...state.draft,
+            selectedPlayerId: undefined,
+            selectedDestination: undefined,
+          },
+        };
+      }
 
       const side = state.draft.activePlayer;
       const active = state.players[side];
