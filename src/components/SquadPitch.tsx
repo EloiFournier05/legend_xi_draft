@@ -11,6 +11,7 @@ interface SquadPitchProps {
   onSelectDestination?: (destination: string) => void;
   teamSide?: TeamSide;
   compact?: boolean;
+  playerRatings?: Record<string, number>;
 }
 
 export function SquadPitch({
@@ -23,6 +24,7 @@ export function SquadPitch({
   onSelectDestination,
   teamSide,
   compact,
+  playerRatings,
 }: SquadPitchProps) {
   const teamClass = teamSide ? `team-pitch-${teamSide}` : "";
 
@@ -51,6 +53,7 @@ export function SquadPitch({
                 compact={compact}
                 pick={visiblePick}
                 slotLabel={starter.slot.label}
+                matchRating={visiblePick ? playerRatings?.[visiblePick.instanceId] : undefined}
                 selected={selectedDestination === starter.slot.id}
                 disabled={!selectable && selectableDestinations.length > 0}
                 onClick={selectable && onSelectDestination ? () => onSelectDestination(starter.slot.id) : undefined}
