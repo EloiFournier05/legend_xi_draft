@@ -79,6 +79,24 @@ export const makeInitialState = (): GameState => ({
 const clonePickForMatch = (pick?: DraftedPlayer): DraftedPlayer | undefined =>
   pick ? { ...pick, enteredAtMinute: 0, redCard: false } : undefined;
 
+const emptyMatchStats = () => ({
+  goals: 0,
+  scorers: {},
+  assists: {},
+  shots: 0,
+  shotsOnTarget: 0,
+  possession: 50,
+  xg: 0,
+  redCards: 0,
+  corners: 0,
+  penalties: 0,
+  fouls: 0,
+  saves: 0,
+  bigChances: 0,
+  woodwork: 0,
+  freeKicks: 0,
+});
+
 const makeMatchState = (state: GameState): MatchState => ({
   minute: 0,
   isPaused: false,
@@ -105,7 +123,7 @@ const makeMatchState = (state: GameState): MatchState => ({
       bench: state.players.player1.bench.map((pick) => ({ ...pick, enteredAtMinute: undefined, redCard: false })),
       substitutionsMade: 0,
       substitutionSessions: 0,
-      stats: { goals: 0, scorers: {}, assists: {}, shots: 0, shotsOnTarget: 0, possession: 50, xg: 0, redCards: 0 },
+      stats: emptyMatchStats(),
     },
     player2: {
       side: "player2",
@@ -118,7 +136,7 @@ const makeMatchState = (state: GameState): MatchState => ({
       bench: state.players.player2.bench.map((pick) => ({ ...pick, enteredAtMinute: undefined, redCard: false })),
       substitutionsMade: 0,
       substitutionSessions: 0,
-      stats: { goals: 0, scorers: {}, assists: {}, shots: 0, shotsOnTarget: 0, possession: 50, xg: 0, redCards: 0 },
+      stats: emptyMatchStats(),
     },
   },
 });
