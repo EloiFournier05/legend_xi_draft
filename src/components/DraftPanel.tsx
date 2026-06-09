@@ -1,5 +1,5 @@
 import { RotateCcw } from "lucide-react";
-import { nextDestinationOptions } from "../utils/draft";
+import { isPlayerAlreadyDrafted, nextDestinationOptions } from "../utils/draft";
 import { formatShortPlayerName } from "../utils/playerNames";
 import type { DraftState, PlayerState, TeamSide } from "../types/game";
 import { PlayerCard } from "./PlayerCard";
@@ -58,16 +58,20 @@ export function DraftPanel({ draft, players, canAct = true, waitingLabel, onSele
             <span className="text-xs text-slate-400">Notes cachées</span>
           </div>
           <div className="thin-scrollbar grid max-h-[340px] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
-            {currentSquad?.players.map((player) => (
-              <PlayerCard
-                key={player.id}
-                player={player}
-                compact
-                selected={draft.selectedPlayerId === player.id}
-                disabled={!canAct}
-                onClick={() => onSelectPlayer(player.id)}
-              />
-            ))}
+            {currentSquad?.players.map((player) => {
+              const alreadyDrafted = isPlayerAlreadyDrafted(players, player);
+              return (
+                <PlayerCard
+                  key={player.id}
+                  player={player}
+                  compact
+                  selected={draft.selectedPlayerId === player.id}
+                  disabled={!canAct || alreadyDrafted}
+                  statusLabel={alreadyDrafted ? "Deja pris" : undefined}
+                  onClick={alreadyDrafted ? undefined : () => onSelectPlayer(player.id)}
+                />
+              );
+            })}
           </div>
         </div>
 
