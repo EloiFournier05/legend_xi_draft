@@ -1,5 +1,7 @@
 import type { MatchState } from "../types/game";
+import { calculatePlayerMatchRating } from "../utils/playerRatings";
 import { formatShortPlayerName } from "../utils/playerNames";
+import { FinalRatingsPitch } from "./FinalRatingsPitch";
 import { MatchStats } from "./MatchStats";
 import { Timeline } from "./Timeline";
 
@@ -9,17 +11,18 @@ interface FinalResultProps {
 }
 
 const topPerformer = (match: MatchState) => {
-  const all = [...match.teams.player1.starters, ...match.teams.player2.starters]
-    .map((slot) => slot.pick)
-    .filter(Boolean)
-    .map((pick) => pick!);
-  return all.sort((a, b) => {
-    const aa = a.player.hiddenAttributes;
-    const bb = b.player.hiddenAttributes;
-    const scoreA = aa.overall + aa.mentality * 0.2 + aa.attack * 0.12 + aa.defense * 0.08;
-    const scoreB = bb.overall + bb.mentality * 0.2 + bb.attack * 0.12 + bb.defense * 0.08;
-    return scoreB - scoreA;
-  })[0];
+  const all = (["player1", "player2"] as const).flatMap((side) => {
+    const team = match.teams[side];
+    const opponent = match.teams[side === "player1" ? "player2" : "player1"];
+    return team.starters
+      .map((slot) => slot.pick)
+      .filter(Boolean)
+      .map((pick) => ({
+        pick: pick!,
+        rating: calculatePlayerMatchRating(pick!, team, opponent, 90),
+      }));
+  });
+  return all.sort((a, b) => b.rating - a.rating)[0]?.pick;
 };
 
 export function FinalResult({ match, onReplay }: FinalResultProps) {
@@ -47,6 +50,7 @@ export function FinalResult({ match, onReplay }: FinalResultProps) {
           Rejouer
         </button>
       </section>
+      <FinalRatingsPitch match={match} />
       <MatchStats team1={team1} team2={team2} />
       <section className="card-frame grid gap-4 rounded-lg p-4 md:grid-cols-2">
         <div>
