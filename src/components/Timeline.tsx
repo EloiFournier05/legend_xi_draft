@@ -13,6 +13,12 @@ const tone = {
   sub: "border-emerald-300 text-emerald-200",
   calm: "border-white/20 text-slate-300",
   defense: "border-slate-300 text-slate-200",
+  corner: "border-cyan-300 text-cyan-200",
+  penalty: "border-amber-300 text-amber-200",
+  keeper: "border-violet-300 text-violet-200",
+  woodwork: "border-orange-300 text-orange-200",
+  counter: "border-lime-300 text-lime-200",
+  freeKick: "border-sky-300 text-sky-200",
 };
 
 export function Timeline({ events, full }: TimelineProps) {
